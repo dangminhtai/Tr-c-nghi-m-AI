@@ -90,7 +90,7 @@ h1 {
 
 .options-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1rem;
 }
 
@@ -181,6 +181,16 @@ button.danger:hover {
   background-color: var(--danger-hover);
 }
 
+button.random-btn {
+    flex-shrink: 0;
+    padding: 0.75rem;
+    font-size: 1.25rem;
+    line-height: 1;
+    background-color: var(--secondary-color);
+}
+button.random-btn:hover {
+    background-color: var(--secondary-hover);
+}
 
 .loading-container, .error-container, .resume-prompt {
   text-align: center;
@@ -377,11 +387,48 @@ button.danger:hover {
 .review-card h3 {
     margin-bottom: 1rem;
 }
-.review-card p {
-    margin-bottom: 0.5rem;
+.review-options {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
-.correct-text { color: var(--correct-color); font-weight: 500; }
-.incorrect-text { color: var(--incorrect-color); font-weight: 500; }
+.review-options li {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: #ffffff;
+  position: relative;
+  padding-left: 2.5rem;
+}
+.review-options li::before {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-weight: bold;
+}
+.review-options li.review-option-correct {
+  background-color: #d1fae5;
+  border-color: #6ee7b7;
+  color: #065f46;
+  font-weight: 500;
+}
+.review-options li.review-option-correct::before {
+  content: '✓';
+  color: var(--correct-color);
+}
+.review-options li.review-option-incorrect {
+  background-color: #fee2e2;
+  border-color: #fca5a5;
+  color: #991b1b;
+}
+.review-options li.review-option-incorrect::before {
+  content: '✗';
+  color: var(--incorrect-color);
+}
 .review-card .explanation {
     margin-top: 1rem;
     background-color: #fff;
@@ -438,8 +485,10 @@ button.danger:hover {
   .app-container {
     padding: 1.5rem 1rem;
   }
-  .input-container, .options-grid {
-    flex-direction: column;
+  .input-container {
+    flex-direction: row;
+  }
+  .options-grid {
     grid-template-columns: 1fr;
   }
   .language-switcher {
@@ -489,14 +538,24 @@ button.danger:hover {
     margin-bottom: 1.5rem;
     background-color: #ffffff !important;
   }
+  
+  .review-options li {
+      background-color: #ffffff !important;
+  }
 
   .review-card h3, .review-card p {
     color: #000000;
   }
   
   /* Ensure colors print for key indicators. This tells the browser to print background and text colors. */
-  .correct-text { color: var(--correct-color) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .incorrect-text { color: var(--incorrect-color) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .review-options li.review-option-correct {
+    background-color: #d1fae5 !important;
+  }
+  .review-options li.review-option-incorrect {
+    background-color: #fee2e2 !important;
+  }
+  .correct-text, .review-options li.review-option-correct, .review-options li.review-option-correct::before { color: var(--correct-color) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .incorrect-text, .review-options li.review-option-incorrect, .review-options li.review-option-incorrect::before { color: var(--incorrect-color) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .review-card.correct-border { border-left-color: var(--correct-color) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .review-card.incorrect-border { border-left-color: var(--incorrect-color) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 

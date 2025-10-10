@@ -3,11 +3,19 @@ import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 import { QuizData, SavedState, Language, Difficulty } from './types';
 import { translations } from './translations';
 
+const AVAILABLE_MODELS = [
+ 'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+  'gemini-2.0-flash',
+  'gemini-2.5-pro'
+];
+
 const App = () => {
   const [language, setLanguage] = useState<Language>('vi');
   const [topic, setTopic] = useState<string>('');
   const [numQuestions, setNumQuestions] = useState<number>(5);
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
+  const [model, setModel] = useState<string>(AVAILABLE_MODELS[0]);
   
   const [quizData, setQuizData] = useState<QuizData | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
@@ -15,6 +23,7 @@ const App = () => {
   const [score, setScore] = useState<number>(0);
   
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isGeneratingTopic, setIsGeneratingTopic] = useState<boolean>(false);
   const [isQuizFinished, setIsQuizFinished] = useState<boolean>(false);
   const [isReviewing, setIsReviewing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,6 +84,25 @@ const App = () => {
     }
   };
 
+  const handleRandomTopic = async () => {
+    setIsGeneratingTopic(true);
+    setError(null);
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const response = await ai.models.generateContent({
+        model,
+        contents: t.randomTopicPrompt,
+      });
+      const randomTopic = response.text.trim().replace(/"/g, '');
+      setTopic(randomTopic);
+    } catch (e) {
+      console.error(e);
+      setError(t.errorMessage);
+    } finally {
+      setIsGeneratingTopic(false);
+    }
+  };
+
   const handleGenerateQuiz = async () => {
     if (!topic.trim()) return;
 
@@ -107,7 +135,7 @@ const App = () => {
       const prompt = t.promptTemplate(topic, numQuestions, t.difficulties[difficulty]);
 
       const response: GenerateContentResponse = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model,
         contents: prompt,
         config: {
           responseMimeType: 'application/json',
@@ -217,8 +245,24 @@ const App = () => {
                     return (
                         <div key={index} className={`review-card ${isCorrect ? 'correct-border' : 'incorrect-border'}`}>
                             <h3>{t.question} {index + 1}: {q.question}</h3>
-                            <p><strong>{t.yourAnswer}</strong> <span className={isCorrect ? 'correct-text' : 'incorrect-text'}>{userAnswer}</span></p>
-                            {!isCorrect && <p><strong>{t.correctAnswer}</strong> <span className="correct-text">{q.correctAnswer}</span></p>}
+                            <ul className="review-options">
+                                {q.options.map((option, optionIndex) => {
+                                    const isCorrectOption = option === q.correctAnswer;
+                                    const isUserChoice = option === userAnswer;
+                                    let optionClass = 'review-option';
+                                    if (isCorrectOption) {
+                                        optionClass += ' review-option-correct';
+                                    } else if (isUserChoice) {
+                                        optionClass += ' review-option-incorrect';
+                                    }
+
+                                    return (
+                                        <li key={optionIndex} className={optionClass}>
+                                            {option}
+                                        </li>
+                                    );
+                                })}
+                            </ul>
                             <div className="explanation">
                                 <strong>{t.explanation}:</strong> {q.explanation}
                             </div>
@@ -347,6 +391,12 @@ const App = () => {
                     <option value="hard">{t.difficulties.hard}</option>
                   </select>
                 </div>
+                 <div>
+                  <label htmlFor="model">{t.modelLabel}</label>
+                  <select id="model" value={model} onChange={(e) => setModel(e.target.value)}>
+                    {AVAILABLE_MODELS.map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                </div>
               </div>
               <div className="input-container">
                   <input
@@ -354,9 +404,12 @@ const App = () => {
                     value={topic}
                     onChange={(e) => setTopic(e.target.value)}
                     placeholder={t.topicPlaceholder}
-                    onKeyDown={(e) => e.key === 'Enter' && handleGenerateQuiz()}
+                    onKeyDown={(e) => e.key === 'Enter' && !isGeneratingTopic && handleGenerateQuiz()}
                   />
-                  <button onClick={handleGenerateQuiz} disabled={isLoading || !topic.trim()}>
+                  <button onClick={handleRandomTopic} disabled={isGeneratingTopic} className="random-btn" aria-label={t.randomTopicButton}>
+                    🎲
+                  </button>
+                  <button onClick={handleGenerateQuiz} disabled={isLoading || !topic.trim() || isGeneratingTopic}>
                     {t.generateButton}
                   </button>
               </div>
