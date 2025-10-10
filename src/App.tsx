@@ -2,10 +2,11 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 import { QuizData, SavedState, Language, Difficulty } from './types';
 import { translations } from './translations';
+import { TOPICS } from './topics';
 
 const AVAILABLE_MODELS = [
- 'gemini-2.5-flash',
-  'gemini-2.5-flash-lite',
+ 'gemini-2.5-flash-lite',
+  'gemini-2.5-flash',
   'gemini-2.0-flash',
   'gemini-2.5-pro'
 ];
@@ -23,7 +24,6 @@ const App = () => {
   const [score, setScore] = useState<number>(0);
   
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isGeneratingTopic, setIsGeneratingTopic] = useState<boolean>(false);
   const [isQuizFinished, setIsQuizFinished] = useState<boolean>(false);
   const [isReviewing, setIsReviewing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,10 +38,15 @@ const App = () => {
       if (savedStateJSON) {
         setShowResumePrompt(true);
       } else {
-        setTopic(language === 'vi' ? 'Câu hỏi trắc nghiệm về HTML cơ bản' : 'Multiple-choice questions about basic HTML');
+        // Set initial random topic
+        const randomTopicIndex = Math.floor(Math.random() * TOPICS[language].length);
+        setTopic(TOPICS[language][randomTopicIndex]);
       }
     } catch (e) {
       console.error("Could not access localStorage:", e);
+       // Set initial random topic even if localStorage fails
+      const randomTopicIndex = Math.floor(Math.random() * TOPICS['vi'].length);
+      setTopic(TOPICS['vi'][randomTopicIndex]);
     }
   }, []);
   
@@ -80,27 +85,24 @@ const App = () => {
       }
     } else {
       localStorage.removeItem('quizProgress');
-      setTopic(language === 'vi' ? 'Câu hỏi trắc nghiệm về HTML cơ bản' : 'Multiple-choice questions about basic HTML');
+      const randomTopicIndex = Math.floor(Math.random() * TOPICS[language].length);
+      setTopic(TOPICS[language][randomTopicIndex]);
     }
   };
 
-  const handleRandomTopic = async () => {
-    setIsGeneratingTopic(true);
-    setError(null);
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model,
-        contents: t.randomTopicPrompt,
-      });
-      const randomTopic = response.text.trim().replace(/"/g, '');
-      setTopic(randomTopic);
-    } catch (e) {
-      console.error(e);
-      setError(t.errorMessage);
-    } finally {
-      setIsGeneratingTopic(false);
+  const handleRandomTopic = () => {
+    const currentTopics = TOPICS[language];
+    let newTopic = topic;
+    // Ensure we get a different topic if possible and the list has more than one item
+    if (currentTopics.length > 1) {
+      do {
+        const randomIndex = Math.floor(Math.random() * currentTopics.length);
+        newTopic = currentTopics[randomIndex];
+      } while (newTopic === topic);
+    } else if (currentTopics.length === 1) {
+      newTopic = currentTopics[0];
     }
+    setTopic(newTopic);
   };
 
   const handleGenerateQuiz = async () => {
@@ -178,7 +180,8 @@ const App = () => {
 
   const handleReset = () => {
     setQuizData(null);
-    setTopic(language === 'vi' ? 'Câu hỏi trắc nghiệm về HTML cơ bản' : 'Multiple-choice questions about basic HTML');
+    const randomTopicIndex = Math.floor(Math.random() * TOPICS[language].length);
+    setTopic(TOPICS[language][randomTopicIndex]);
     setIsQuizFinished(false);
     setIsReviewing(false);
     localStorage.removeItem('quizProgress');
@@ -404,12 +407,12 @@ const App = () => {
                     value={topic}
                     onChange={(e) => setTopic(e.target.value)}
                     placeholder={t.topicPlaceholder}
-                    onKeyDown={(e) => e.key === 'Enter' && !isGeneratingTopic && handleGenerateQuiz()}
+                    onKeyDown={(e) => e.key === 'Enter' && !isLoading && handleGenerateQuiz()}
                   />
-                  <button onClick={handleRandomTopic} disabled={isGeneratingTopic} className="random-btn" aria-label={t.randomTopicButton}>
+                  <button onClick={handleRandomTopic} className="random-btn" aria-label={t.randomTopicButton}>
                     🎲
                   </button>
-                  <button onClick={handleGenerateQuiz} disabled={isLoading || !topic.trim() || isGeneratingTopic}>
+                  <button onClick={handleGenerateQuiz} disabled={isLoading || !topic.trim()}>
                     {t.generateButton}
                   </button>
               </div>

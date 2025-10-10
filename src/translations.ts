@@ -33,7 +33,6 @@ export const translations = {
     confirmExit: "Đồng ý",
     cancelExit: "Hủy",
     promptTemplate: (topic: string, numQuestions: number, difficulty: string) => `Tạo một bài kiểm tra trắc nghiệm gồm ${numQuestions} câu về chủ đề sau: "${topic}" với độ khó là ${difficulty}. Mỗi câu hỏi phải có 4 lựa chọn. Đảm bảo rằng 'correctAnswer' phải là một trong các giá trị trong mảng 'options'.`,
-    randomTopicPrompt: "Gợi ý một chủ đề ngẫu nhiên và thú vị cho một bài kiểm tra trắc nghiệm. Chỉ trả lời bằng tên chủ đề.",
   },
   en: {
     title: "AI Quiz Generator",
@@ -69,6 +68,5 @@ export const translations = {
     confirmExit: "Yes, Exit",
     cancelExit: "Cancel",
     promptTemplate: (topic: string, numQuestions: number, difficulty: string) => `Generate a multiple-choice quiz with ${numQuestions} questions on the following topic: "${topic}" with a difficulty of ${difficulty}. Each question must have 4 options. Ensure that 'correctAnswer' is one of the values in the 'options' array.`,
-    randomTopicPrompt: "Suggest a random and interesting topic for a multiple-choice quiz. Only reply with the topic name.",
   }
 };
