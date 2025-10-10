@@ -50,6 +50,11 @@ const translations = {
     resumePrompt: "Tìm thấy một bài kiểm tra đang dang dở. Bạn có muốn tiếp tục không?",
     resumeYes: "Tiếp tục",
     resumeNo: "Bắt đầu lại",
+    exitButton: "Thoát",
+    exitConfirmTitle: "Xác nhận thoát",
+    exitConfirmMessage: "Bạn có chắc muốn thoát không? Toàn bộ tiến trình sẽ bị mất.",
+    confirmExit: "Đồng ý",
+    cancelExit: "Hủy",
     promptTemplate: (topic: string, numQuestions: number, difficulty: string) => `Tạo một bài kiểm tra trắc nghiệm gồm ${numQuestions} câu về chủ đề sau: "${topic}" với độ khó là ${difficulty}. Mỗi câu hỏi phải có 4 lựa chọn. Đảm bảo rằng 'correctAnswer' phải là một trong các giá trị trong mảng 'options'.`,
   },
   en: {
@@ -78,6 +83,11 @@ const translations = {
     resumePrompt: "In-progress quiz found. Would you like to resume?",
     resumeYes: "Resume",
     resumeNo: "Start Over",
+    exitButton: "Exit",
+    exitConfirmTitle: "Confirm Exit",
+    exitConfirmMessage: "Are you sure you want to exit? All progress will be lost.",
+    confirmExit: "Yes, Exit",
+    cancelExit: "Cancel",
     promptTemplate: (topic: string, numQuestions: number, difficulty: string) => `Generate a multiple-choice quiz with ${numQuestions} questions on the following topic: "${topic}" with a difficulty of ${difficulty}. Each question must have 4 options. Ensure that 'correctAnswer' is one of the values in the 'options' array.`,
   }
 };
@@ -102,6 +112,7 @@ const App = () => {
   const [isReviewing, setIsReviewing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [showResumePrompt, setShowResumePrompt] = useState<boolean>(false);
+  const [showExitConfirm, setShowExitConfirm] = useState<boolean>(false);
 
   const t = useMemo(() => translations[language], [language]);
 
@@ -240,6 +251,11 @@ const App = () => {
     localStorage.removeItem('quizProgress');
   };
 
+  const handleConfirmExit = () => {
+    setShowExitConfirm(false);
+    handleReset();
+  };
+
   const handlePrint = () => {
       window.print();
   };
@@ -327,12 +343,15 @@ const App = () => {
     if (quizData) {
       const currentQuestion = quizData[currentQuestionIndex];
       const selectedAnswer = userAnswers[currentQuestionIndex];
-      const progress = ((currentQuestionIndex + 1) / quizData.length) * 100;
+      const progress = ((currentQuestionIndex) / quizData.length) * 100;
 
       return (
         <div className={`quiz-container ${selectedAnswer ? 'answered' : ''}`}>
-          <div className="progress-bar no-print">
-            <div className="progress" style={{ width: `${progress}%` }}></div>
+          <div className="quiz-header no-print">
+            <div className="progress-bar">
+                <div className="progress" style={{ width: `${progress}%` }}></div>
+            </div>
+            <button className="exit-btn" onClick={() => setShowExitConfirm(true)}>{t.exitButton}</button>
           </div>
           <h2>{t.question} {currentQuestionIndex + 1}: {currentQuestion.question}</h2>
           <ul className="options-list">
@@ -381,6 +400,23 @@ const App = () => {
     return null;
   };
 
+  const renderExitConfirmation = () => {
+    if (!showExitConfirm) return null;
+
+    return (
+        <div className="modal-overlay">
+            <div className="modal-content">
+                <h2>{t.exitConfirmTitle}</h2>
+                <p>{t.exitConfirmMessage}</p>
+                <div className="modal-actions">
+                    <button onClick={() => setShowExitConfirm(false)} className="secondary">{t.cancelExit}</button>
+                    <button onClick={handleConfirmExit} className="danger">{t.confirmExit}</button>
+                </div>
+            </div>
+        </div>
+    )
+  }
+
   return (
     <>
       {renderLanguageSwitcher()}
@@ -424,6 +460,7 @@ const App = () => {
         )}
         {renderContent()}
       </div>
+      {renderExitConfirmation()}
     </>
   );
 };

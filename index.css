@@ -5,6 +5,8 @@
   --secondary-hover: #4b5563;
   --correct-color: #10b981;
   --incorrect-color: #ef4444;
+  --danger-color: #ef4444;
+  --danger-hover: #dc2626;
   --background-color: #f3f4f6;
   --card-background: #ffffff;
   --text-color: #1f2937;
@@ -59,6 +61,7 @@ h1 {
   background-color: var(--border-color);
   border-radius: 8px;
   padding: 3px;
+  z-index: 10;
 }
 .language-switcher button {
   padding: 0.25rem 0.75rem;
@@ -171,6 +174,13 @@ button.secondary:hover {
     background-color: var(--secondary-hover);
 }
 
+button.danger {
+  background-color: var(--danger-color);
+}
+button.danger:hover {
+  background-color: var(--danger-hover);
+}
+
 
 .loading-container, .error-container, .resume-prompt {
   text-align: center;
@@ -206,6 +216,22 @@ button.secondary:hover {
   margin-bottom: 1rem;
 }
 
+.quiz-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.exit-btn {
+  padding: 0.5rem 1rem;
+  background-color: var(--border-color);
+  color: var(--subtle-text);
+  font-size: 0.875rem;
+}
+.exit-btn:hover {
+  background-color: #d1d5db;
+}
 
 .quiz-container h2 {
   margin-bottom: 1.5rem;
@@ -274,11 +300,10 @@ button.secondary:hover {
 }
 
 .progress-bar {
-  width: 100%;
+  flex-grow: 1;
   background-color: var(--border-color);
   border-radius: 99px;
   height: 8px;
-  margin-bottom: 1.5rem;
   overflow: hidden;
 }
 
@@ -366,6 +391,43 @@ button.secondary:hover {
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+.modal-content {
+  background-color: var(--card-background);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+}
+.modal-content h2 {
+  margin-bottom: 1rem;
+  color: var(--text-color);
+}
+.modal-content p {
+  margin-bottom: 1.5rem;
+  color: var(--subtle-text);
+}
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
 }
 
 
