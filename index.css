@@ -235,13 +235,17 @@ button.random-btn:hover {
 
 .exit-btn {
   padding: 0.5rem 1rem;
-  background-color: var(--border-color);
-  color: var(--subtle-text);
+  background-color: #e63946; /* đỏ tươi */
+  color: #fff;
   font-size: 0.875rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
 }
 .exit-btn:hover {
-  background-color: #d1d5db;
+  background-color: #c92a2a; /* đỏ đậm khi hover */
 }
+
 
 .quiz-container h2 {
   margin-bottom: 1.5rem;
