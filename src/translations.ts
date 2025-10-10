@@ -9,7 +9,14 @@ export const translations = {
     difficultyLabel: "Độ khó:",
     modelLabel: "Model AI:",
     randomTopicButton: "Chủ đề ngẫu nhiên",
-    difficulties: { easy: "Dễ", medium: "Trung bình", hard: "Khó" },
+    difficulties: { 
+    very_easy: "Rất dễ", 
+    easy: "Dễ", 
+    medium: "Trung bình", 
+    hard: "Khó", 
+    very_hard: "Rất khó", 
+    extreme: "Cực khó" 
+  },
     completeTitle: "Hoàn thành!",
     completeMessage: "Bạn đã trả lời đúng",
     outOf: "trên",
@@ -44,7 +51,14 @@ export const translations = {
     difficultyLabel: "Difficulty:",
     modelLabel: "AI Model:",
     randomTopicButton: "Random Topic",
-    difficulties: { easy: "Easy", medium: "Medium", hard: "Hard" },
+    difficulties: { 
+    very_easy: "Very Easy", 
+    easy: "Easy", 
+    medium: "Medium", 
+    hard: "Hard", 
+    very_hard: "Very Hard", 
+    extreme: "Extreme" 
+  },
     completeTitle: "Finished!",
     completeMessage: "You answered",
     outOf: "out of",

@@ -389,9 +389,13 @@ const App = () => {
                 <div>
                   <label htmlFor="difficulty">{t.difficultyLabel}</label>
                   <select id="difficulty" value={difficulty} onChange={(e) => setDifficulty(e.target.value as any)}>
-                    <option value="easy">{t.difficulties.easy}</option>
-                    <option value="medium">{t.difficulties.medium}</option>
-                    <option value="hard">{t.difficulties.hard}</option>
+                <option value="very_easy">{t.difficulties.very_easy}</option>
+                <option value="easy">{t.difficulties.easy}</option>
+                <option value="medium">{t.difficulties.medium}</option>
+                <option value="hard">{t.difficulties.hard}</option>
+                <option value="very_hard">{t.difficulties.very_hard}</option>
+                <option value="extreme">{t.difficulties.extreme}</option>
+
                   </select>
                 </div>
                  <div>

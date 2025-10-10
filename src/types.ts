@@ -20,4 +20,10 @@ export interface SavedState {
 }
 
 export type Language = 'vi' | 'en';
-export type Difficulty = 'easy' | 'medium' | 'hard';
+export type Difficulty = 
+  'very_easy' | 
+  'easy' | 
+  'medium' | 
+  'hard' | 
+  'very_hard' | 
+  'extreme';
