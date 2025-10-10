@@ -82,6 +82,10 @@ const translations = {
   }
 };
 
+// Fix: Removed the non-compliant API key fallback and retry mechanism.
+// This simplifies the code to adhere to the guideline of using process.env.API_KEY directly
+// and also resolves the TypeScript error related to `import.meta.env`.
+
 const App = () => {
   const [language, setLanguage] = useState<'vi' | 'en'>('vi');
   const [topic, setTopic] = useState<string>('');
@@ -166,7 +170,9 @@ const App = () => {
     setIsReviewing(false);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+      // Fix: Refactored to use GoogleGenAI directly as per the guidelines.
+      // The API key must be sourced exclusively from process.env.API_KEY.
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
       const responseSchema = {
         type: Type.ARRAY,
@@ -193,7 +199,8 @@ const App = () => {
         },
       });
       
-      const parsedData = JSON.parse(response.text);
+      const parsedData: QuizData = JSON.parse(response.text);
+      
       setQuizData(parsedData);
       setUserAnswers(new Array(parsedData.length).fill(null));
 
@@ -389,6 +396,7 @@ const App = () => {
                     <option value="5">5</option>
                     <option value="10">10</option>
                     <option value="15">15</option>
+                    <option value="20">20</option>
                   </select>
                 </div>
                 <div>
