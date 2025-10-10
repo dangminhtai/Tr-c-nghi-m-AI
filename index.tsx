@@ -1,1 +1,8 @@
-// This file is obsolete. The application entry point has been moved to src/index.tsx.
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './src/App';
+import './index.css';
+
+const container = document.getElementById('root');
+const root = createRoot(container!);
+root.render(<App />);
