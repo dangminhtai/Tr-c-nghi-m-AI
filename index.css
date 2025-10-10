@@ -454,32 +454,61 @@ button.danger:hover {
 /* Print Styles */
 @media print {
   body {
-    padding: 0;
-    background-color: #fff;
+    padding: 1rem;
+    background-color: #ffffff;
+    color: #000000;
   }
+
+  /* Hide elements not meant for printing. This is the most crucial part. */
   .no-print {
     display: none !important;
   }
+
+  /* Show elements specifically for printing. */
   .print-only {
     display: block !important;
+    text-align: center;
+    color: #000000;
   }
-  #root {
+
+  /* Reset layout containers for a full-page document feel */
+  #root, .app-container {
+    width: 100%;
     max-width: 100%;
-  }
-  .app-container {
     box-shadow: none;
-    border-radius: 0;
-    padding: 1rem;
+    border: none;
+    padding: 0;
+    background-color: #ffffff;
   }
+
+  /* Style the review cards for readability on paper */
   .review-card {
-    border: 1px solid var(--border-color);
-    page-break-inside: avoid;
+    border: 1px solid #dddddd;
+    border-left-width: 4px; /* Keep the colored indicator */
+    page-break-inside: avoid; /* Prevent questions from splitting across pages */
+    margin-bottom: 1.5rem;
+    background-color: #ffffff !important;
   }
-  a {
-    text-decoration: none;
-    color: inherit;
+
+  .review-card h3, .review-card p {
+    color: #000000;
   }
-  button {
+  
+  /* Ensure colors print for key indicators. This tells the browser to print background and text colors. */
+  .correct-text { color: var(--correct-color) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .incorrect-text { color: var(--incorrect-color) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .review-card.correct-border { border-left-color: var(--correct-color) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .review-card.incorrect-border { border-left-color: var(--incorrect-color) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  .explanation {
+    background-color: #f3f4f6 !important; /* A light grey background helps it stand out */
+    border-left-color: var(--primary-color) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  /* Hide all links and buttons from the printout */
+  a, button {
     display: none;
   }
 }

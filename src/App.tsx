@@ -29,7 +29,7 @@ const App = () => {
       if (savedStateJSON) {
         setShowResumePrompt(true);
       } else {
-        setTopic(language === 'vi' ? '10 câu hỏi trắc nghiệm về HTML cơ bản' : '10 multiple-choice questions about basic HTML');
+        setTopic(language === 'vi' ? 'Câu hỏi trắc nghiệm về HTML cơ bản' : 'Multiple-choice questions about basic HTML');
       }
     } catch (e) {
       console.error("Could not access localStorage:", e);
@@ -71,7 +71,7 @@ const App = () => {
       }
     } else {
       localStorage.removeItem('quizProgress');
-      setTopic(language === 'vi' ? '10 câu hỏi trắc nghiệm về HTML cơ bản' : '10 multiple-choice questions about basic HTML');
+      setTopic(language === 'vi' ? 'Câu hỏi trắc nghiệm về HTML cơ bản' : 'Multiple-choice questions about basic HTML');
     }
   };
 
@@ -150,7 +150,7 @@ const App = () => {
 
   const handleReset = () => {
     setQuizData(null);
-    setTopic(language === 'vi' ? '10 câu hỏi trắc nghiệm về HTML cơ bản' : '10 multiple-choice questions about basic HTML');
+    setTopic(language === 'vi' ? 'Câu hỏi trắc nghiệm về HTML cơ bản' : 'Multiple-choice questions about basic HTML');
     setIsQuizFinished(false);
     setIsReviewing(false);
     localStorage.removeItem('quizProgress');
