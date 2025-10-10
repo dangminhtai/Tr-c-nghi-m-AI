@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 
@@ -13,15 +13,145 @@ interface Question {
 // Định nghĩa kiểu dữ liệu cho toàn bộ bài quiz
 type QuizData = Question[];
 
+// Định nghĩa kiểu dữ liệu cho trạng thái được lưu
+interface SavedState {
+  quizData: QuizData;
+  currentQuestionIndex: number;
+  userAnswers: (string | null)[];
+  score: number;
+  topic: string;
+  language: 'vi' | 'en';
+}
+
+const translations = {
+  vi: {
+    title: "Trắc Nghiệm AI",
+    topicPlaceholder: "Nhập chủ đề bạn muốn...",
+    generateButton: "Tạo Đề Thi",
+    loadingMessage: "AI đang soạn câu hỏi, vui lòng chờ...",
+    errorMessage: "Không thể tạo câu hỏi. Vui lòng thử lại sau.",
+    numQuestionsLabel: "Số câu hỏi:",
+    difficultyLabel: "Độ khó:",
+    difficulties: { easy: "Dễ", medium: "Trung bình", hard: "Khó" },
+    completeTitle: "Hoàn thành!",
+    completeMessage: "Bạn đã trả lời đúng",
+    outOf: "trên",
+    questions: "câu",
+    tryAgainButton: "Làm bài khác",
+    reviewButton: "Xem lại bài làm",
+    printButton: "In kết quả",
+    question: "Câu",
+    explanation: "Giải thích",
+    nextButton: "Câu tiếp theo",
+    resultsButton: "Xem kết quả",
+    backToResults: "Quay lại kết quả",
+    yourAnswer: "Câu trả lời của bạn:",
+    correctAnswer: "Đáp án đúng:",
+    resumePrompt: "Tìm thấy một bài kiểm tra đang dang dở. Bạn có muốn tiếp tục không?",
+    resumeYes: "Tiếp tục",
+    resumeNo: "Bắt đầu lại",
+    promptTemplate: (topic: string, numQuestions: number, difficulty: string) => `Tạo một bài kiểm tra trắc nghiệm gồm ${numQuestions} câu về chủ đề sau: "${topic}" với độ khó là ${difficulty}. Mỗi câu hỏi phải có 4 lựa chọn. Đảm bảo rằng 'correctAnswer' phải là một trong các giá trị trong mảng 'options'.`,
+  },
+  en: {
+    title: "AI Quiz Generator",
+    topicPlaceholder: "Enter the topic you want...",
+    generateButton: "Generate Quiz",
+    loadingMessage: "The AI is generating questions, please wait...",
+    errorMessage: "Could not generate the quiz. Please try again later.",
+    numQuestionsLabel: "Number of questions:",
+    difficultyLabel: "Difficulty:",
+    difficulties: { easy: "Easy", medium: "Medium", hard: "Hard" },
+    completeTitle: "Finished!",
+    completeMessage: "You answered",
+    outOf: "out of",
+    questions: "questions correctly",
+    tryAgainButton: "Try another quiz",
+    reviewButton: "Review Answers",
+    printButton: "Print Results",
+    question: "Question",
+    explanation: "Explanation",
+    nextButton: "Next Question",
+    resultsButton: "View Results",
+    backToResults: "Back to Results",
+    yourAnswer: "Your answer:",
+    correctAnswer: "Correct answer:",
+    resumePrompt: "In-progress quiz found. Would you like to resume?",
+    resumeYes: "Resume",
+    resumeNo: "Start Over",
+    promptTemplate: (topic: string, numQuestions: number, difficulty: string) => `Generate a multiple-choice quiz with ${numQuestions} questions on the following topic: "${topic}" with a difficulty of ${difficulty}. Each question must have 4 options. Ensure that 'correctAnswer' is one of the values in the 'options' array.`,
+  }
+};
+
 const App = () => {
-  const [topic, setTopic] = useState<string>('10 câu hỏi trắc nghiệm về HTML cơ bản');
+  const [language, setLanguage] = useState<'vi' | 'en'>('vi');
+  const [topic, setTopic] = useState<string>('');
+  const [numQuestions, setNumQuestions] = useState<number>(5);
+  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
+  
   const [quizData, setQuizData] = useState<QuizData | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [userAnswers, setUserAnswers] = useState<(string | null)[]>([]);
   const [score, setScore] = useState<number>(0);
+  
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isQuizFinished, setIsQuizFinished] = useState<boolean>(false);
+  const [isReviewing, setIsReviewing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [showResumePrompt, setShowResumePrompt] = useState<boolean>(false);
+
+  const t = useMemo(() => translations[language], [language]);
+
+  useEffect(() => {
+    try {
+      const savedStateJSON = localStorage.getItem('quizProgress');
+      if (savedStateJSON) {
+        setShowResumePrompt(true);
+      } else {
+        setTopic(language === 'vi' ? '10 câu hỏi trắc nghiệm về HTML cơ bản' : '10 multiple-choice questions about basic HTML');
+      }
+    } catch (e) {
+      console.error("Could not access localStorage:", e);
+    }
+  }, []);
+  
+  useEffect(() => {
+    try {
+      if (quizData && !isQuizFinished) {
+        const stateToSave: SavedState = {
+          quizData, currentQuestionIndex, userAnswers, score, topic, language
+        };
+        localStorage.setItem('quizProgress', JSON.stringify(stateToSave));
+      } else {
+        localStorage.removeItem('quizProgress');
+      }
+    } catch (e) {
+      console.error("Could not access localStorage:", e);
+    }
+  }, [quizData, currentQuestionIndex, userAnswers, score, isQuizFinished, topic, language]);
+
+  const handleResume = (resume: boolean) => {
+    setShowResumePrompt(false);
+    if (resume) {
+      try {
+        const savedStateJSON = localStorage.getItem('quizProgress');
+        if (savedStateJSON) {
+          const savedState: SavedState = JSON.parse(savedStateJSON);
+          setLanguage(savedState.language);
+          setTopic(savedState.topic);
+          setQuizData(savedState.quizData);
+          setCurrentQuestionIndex(savedState.currentQuestionIndex);
+          setUserAnswers(savedState.userAnswers);
+          setScore(savedState.score);
+        }
+      } catch (e) {
+         console.error("Failed to parse saved state:", e);
+         localStorage.removeItem('quizProgress');
+      }
+    } else {
+      localStorage.removeItem('quizProgress');
+      setTopic(language === 'vi' ? '10 câu hỏi trắc nghiệm về HTML cơ bản' : '10 multiple-choice questions about basic HTML');
+    }
+  };
 
   const handleGenerateQuiz = async () => {
     if (!topic.trim()) return;
@@ -31,8 +161,9 @@ const App = () => {
     setQuizData(null);
     setScore(0);
     setCurrentQuestionIndex(0);
+    setUserAnswers([]);
     setIsQuizFinished(false);
-    setSelectedAnswer(null);
+    setIsReviewing(false);
 
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
@@ -51,9 +182,11 @@ const App = () => {
         },
       };
 
+      const prompt = t.promptTemplate(topic, numQuestions, t.difficulties[difficulty]);
+
       const response: GenerateContentResponse = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: `Tạo một bài kiểm tra trắc nghiệm về chủ đề sau: "${topic}". Mỗi câu hỏi phải có 4 lựa chọn. Đảm bảo rằng correctAnswer phải là một trong các giá trị trong mảng options.`,
+        contents: prompt,
         config: {
           responseMimeType: 'application/json',
           responseSchema,
@@ -62,19 +195,23 @@ const App = () => {
       
       const parsedData = JSON.parse(response.text);
       setQuizData(parsedData);
+      setUserAnswers(new Array(parsedData.length).fill(null));
 
     } catch (e) {
       console.error(e);
-      setError('Không thể tạo câu hỏi. Vui lòng thử lại sau.');
+      setError(t.errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
   
   const handleAnswerSelect = (option: string) => {
-    if (selectedAnswer !== null) return; // Đã trả lời rồi thì không cho chọn lại
+    if (userAnswers[currentQuestionIndex] !== null) return;
 
-    setSelectedAnswer(option);
+    const newAnswers = [...userAnswers];
+    newAnswers[currentQuestionIndex] = option;
+    setUserAnswers(newAnswers);
+
     if (option === quizData![currentQuestionIndex].correctAnswer) {
       setScore(prevScore => prevScore + 1);
     }
@@ -83,7 +220,6 @@ const App = () => {
   const handleNextQuestion = () => {
     if (currentQuestionIndex < quizData!.length - 1) {
       setCurrentQuestionIndex(prevIndex => prevIndex + 1);
-      setSelectedAnswer(null);
     } else {
       setIsQuizFinished(true);
     }
@@ -91,16 +227,39 @@ const App = () => {
 
   const handleReset = () => {
     setQuizData(null);
-    setTopic('');
+    setTopic(language === 'vi' ? '10 câu hỏi trắc nghiệm về HTML cơ bản' : '10 multiple-choice questions about basic HTML');
     setIsQuizFinished(false);
-  }
+    setIsReviewing(false);
+    localStorage.removeItem('quizProgress');
+  };
+
+  const handlePrint = () => {
+      window.print();
+  };
+  
+  const renderLanguageSwitcher = () => (
+    <div className="language-switcher no-print">
+      <button onClick={() => setLanguage('vi')} className={language === 'vi' ? 'active' : ''}>VI</button>
+      <button onClick={() => setLanguage('en')} className={language === 'en' ? 'active' : ''}>EN</button>
+    </div>
+  );
 
   const renderContent = () => {
+    if (showResumePrompt) {
+        return (
+            <div className="resume-prompt">
+                <p>{t.resumePrompt}</p>
+                <button onClick={() => handleResume(true)}>{t.resumeYes}</button>
+                <button onClick={() => handleResume(false)} className="secondary">{t.resumeNo}</button>
+            </div>
+        )
+    }
+
     if (isLoading) {
       return (
         <div className="loading-container">
           <div className="spinner"></div>
-          <p>AI đang soạn câu hỏi, vui lòng chờ...</p>
+          <p>{t.loadingMessage}</p>
         </div>
       );
     }
@@ -109,39 +268,75 @@ const App = () => {
       return (
         <div className="error-container">
           <p className="error-message">{error}</p>
+          <button onClick={handleReset}>{t.tryAgainButton}</button>
         </div>
       );
     }
     
+    if (isReviewing) {
+        return (
+            <div className="review-container">
+                <div className="review-header no-print">
+                     <h2>{t.reviewButton}</h2>
+                     <div>
+                        <button onClick={() => setIsReviewing(false)} className="secondary">{t.backToResults}</button>
+                        <button onClick={handlePrint}>{t.printButton}</button>
+                    </div>
+                </div>
+                {quizData?.map((q, index) => {
+                    const userAnswer = userAnswers[index];
+                    const isCorrect = userAnswer === q.correctAnswer;
+                    return (
+                        <div key={index} className={`review-card ${isCorrect ? 'correct-border' : 'incorrect-border'}`}>
+                            <h3>{t.question} {index + 1}: {q.question}</h3>
+                            <p><strong>{t.yourAnswer}</strong> <span className={isCorrect ? 'correct-text' : 'incorrect-text'}>{userAnswer}</span></p>
+                            {!isCorrect && <p><strong>{t.correctAnswer}</strong> <span className="correct-text">{q.correctAnswer}</span></p>}
+                            <div className="explanation">
+                                <strong>{t.explanation}:</strong> {q.explanation}
+                            </div>
+                        </div>
+                    )
+                })}
+            </div>
+        )
+    }
+
     if (isQuizFinished) {
       return (
         <div className="results-container">
-          <h2>Hoàn thành!</h2>
+          <h2>{t.completeTitle}</h2>
           <p>
-            Bạn đã trả lời đúng <strong>{score}</strong> trên{' '}
-            <strong>{quizData?.length}</strong> câu.
+            {t.completeMessage} <strong>{score}</strong> {t.outOf}{' '}
+            <strong>{quizData?.length}</strong> {t.questions}.
           </p>
-          <button onClick={handleReset}>Làm bài khác</button>
+          <div className="results-actions">
+            <button onClick={handleReset}>{t.tryAgainButton}</button>
+            <button onClick={() => setIsReviewing(true)}>{t.reviewButton}</button>
+          </div>
         </div>
       );
     }
 
     if (quizData) {
       const currentQuestion = quizData[currentQuestionIndex];
+      const selectedAnswer = userAnswers[currentQuestionIndex];
+      const progress = ((currentQuestionIndex + 1) / quizData.length) * 100;
+
       return (
         <div className={`quiz-container ${selectedAnswer ? 'answered' : ''}`}>
-          <h2>Câu {currentQuestionIndex + 1}: {currentQuestion.question}</h2>
+          <div className="progress-bar no-print">
+            <div className="progress" style={{ width: `${progress}%` }}></div>
+          </div>
+          <h2>{t.question} {currentQuestionIndex + 1}: {currentQuestion.question}</h2>
           <ul className="options-list">
             {currentQuestion.options.map((option, index) => {
-              const isCorrect = option === currentQuestion.correctAnswer;
+              const isCorrectAnswer = option === currentQuestion.correctAnswer;
               const isSelected = option === selectedAnswer;
               
               let btnClass = 'option-btn';
               if (selectedAnswer !== null) {
-                if (isCorrect) btnClass += ' correct';
+                if (isCorrectAnswer) btnClass += ' correct';
                 else if (isSelected) btnClass += ' incorrect';
-              } else if (isSelected) {
-                 btnClass += ' selected'
               }
 
               return (
@@ -160,14 +355,14 @@ const App = () => {
           </ul>
           {selectedAnswer && (
             <div className="explanation">
-              <strong>Giải thích:</strong> {currentQuestion.explanation}
+              <strong>{t.explanation}:</strong> {currentQuestion.explanation}
             </div>
           )}
-          <div className="quiz-footer">
+          <div className="quiz-footer no-print">
             <span>{currentQuestionIndex + 1} / {quizData.length}</span>
             {selectedAnswer && (
               <button onClick={handleNextQuestion}>
-                {currentQuestionIndex < quizData.length - 1 ? 'Câu tiếp theo' : 'Xem kết quả'}
+                {currentQuestionIndex < quizData.length - 1 ? t.nextButton : t.resultsButton}
               </button>
             )}
           </div>
@@ -180,24 +375,48 @@ const App = () => {
   };
 
   return (
-    <div className="app-container">
-      <h1>Trắc Nghiệm AI</h1>
-      {!quizData && !isLoading && !isQuizFinished &&(
-         <div className="input-container">
-            <input
-              type="text"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              placeholder="Nhập chủ đề bạn muốn..."
-              onKeyDown={(e) => e.key === 'Enter' && handleGenerateQuiz()}
-            />
-            <button onClick={handleGenerateQuiz} disabled={isLoading || !topic.trim()}>
-              Tạo Đề Thi
-            </button>
-         </div>
-      )}
-      {renderContent()}
-    </div>
+    <>
+      {renderLanguageSwitcher()}
+      <div className="app-container">
+        <h1 className="print-only">{t.title}: {topic}</h1>
+        <h1 className="no-print">{t.title}</h1>
+        {!quizData && !isLoading && !isQuizFinished && !showResumePrompt && (
+           <div className="setup-container">
+              <div className="options-grid">
+                <div>
+                  <label htmlFor="numQuestions">{t.numQuestionsLabel}</label>
+                  <select id="numQuestions" value={numQuestions} onChange={(e) => setNumQuestions(Number(e.target.value))}>
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="15">15</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="difficulty">{t.difficultyLabel}</label>
+                  <select id="difficulty" value={difficulty} onChange={(e) => setDifficulty(e.target.value as any)}>
+                    <option value="easy">{t.difficulties.easy}</option>
+                    <option value="medium">{t.difficulties.medium}</option>
+                    <option value="hard">{t.difficulties.hard}</option>
+                  </select>
+                </div>
+              </div>
+              <div className="input-container">
+                  <input
+                    type="text"
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                    placeholder={t.topicPlaceholder}
+                    onKeyDown={(e) => e.key === 'Enter' && handleGenerateQuiz()}
+                  />
+                  <button onClick={handleGenerateQuiz} disabled={isLoading || !topic.trim()}>
+                    {t.generateButton}
+                  </button>
+              </div>
+           </div>
+        )}
+        {renderContent()}
+      </div>
+    </>
   );
 };
 
