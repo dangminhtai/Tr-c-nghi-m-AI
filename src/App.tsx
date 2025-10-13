@@ -14,7 +14,7 @@ const AVAILABLE_MODELS = [
 const App = () => {
   const [language, setLanguage] = useState<Language>('vi');
   const [topic, setTopic] = useState<string>('');
-  const [numQuestions, setNumQuestions] = useState<number>(5);
+  const [numQuestions, setNumQuestions] = useState<number | ''>(5);
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [model, setModel] = useState<string>(AVAILABLE_MODELS[0]);
   
@@ -106,7 +106,7 @@ const App = () => {
   };
 
   const handleGenerateQuiz = async () => {
-    if (!topic.trim()) return;
+    if (!topic.trim() || !numQuestions) return;
 
     setIsLoading(true);
     setError(null);
@@ -134,7 +134,7 @@ const App = () => {
         },
       };
 
-      const prompt = t.promptTemplate(topic, numQuestions, t.difficulties[difficulty]);
+      const prompt = t.promptTemplate(topic, Number(numQuestions), t.difficulties[difficulty]);
 
       const response: GenerateContentResponse = await ai.models.generateContent({
         model,
@@ -379,12 +379,24 @@ const App = () => {
               <div className="options-grid">
                 <div>
                   <label htmlFor="numQuestions">{t.numQuestionsLabel}</label>
-                  <select id="numQuestions" value={numQuestions} onChange={(e) => setNumQuestions(Number(e.target.value))}>
-                    <option value="5">5</option>
-                    <option value="10">10</option>
-                    <option value="15">15</option>
-                    <option value="20">20</option>
-                  </select>
+                  <input
+                    type="number"
+                    id="numQuestions"
+                    min="1"
+                    max="100"
+                    value={numQuestions}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '') {
+                        setNumQuestions('');
+                        return;
+                      }
+                      const num = parseInt(val, 10);
+                      if (!isNaN(num)) {
+                        setNumQuestions(Math.max(1, Math.min(100, num)));
+                      }
+                    }}
+                  />
                 </div>
                 <div>
                   <label htmlFor="difficulty">{t.difficultyLabel}</label>
@@ -416,7 +428,7 @@ const App = () => {
                   <button onClick={handleRandomTopic} className="random-btn" aria-label={t.randomTopicButton}>
                     🎲
                   </button>
-                  <button onClick={handleGenerateQuiz} disabled={isLoading || !topic.trim()}>
+                  <button onClick={handleGenerateQuiz} disabled={isLoading || !topic.trim() || !numQuestions}>
                     {t.generateButton}
                   </button>
               </div>

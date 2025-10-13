@@ -106,7 +106,8 @@ h1 {
   margin-bottom: 0.25rem;
 }
 
-select {
+select,
+.options-grid input[type="number"] {
   padding: 0.75rem;
   border: 1px solid var(--border-color);
   border-radius: 8px;
@@ -114,7 +115,8 @@ select {
   font-family: inherit;
   background-color: #fff;
 }
-select:focus {
+select:focus,
+.options-grid input[type="number"]:focus {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
