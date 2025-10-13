@@ -107,40 +107,47 @@ h1 {
 }
 
 select,
+textarea,
 .options-grid input[type="number"] {
-  padding: 0.75rem;
+  padding: 0.75rem 1rem;
   border: 1px solid var(--border-color);
   border-radius: 8px;
   font-size: 1rem;
   font-family: inherit;
   background-color: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 select:focus,
+textarea:focus,
 .options-grid input[type="number"]:focus {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
 }
 
-.input-container {
+textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+.topic-input-container {
   display: flex;
+  flex-direction: column;
+}
+.topic-input-container label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--subtle-text);
+  margin-bottom: 0.25rem;
+}
+.setup-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+.setup-actions .secondary {
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
-}
-
-input[type="text"] {
-  flex-grow: 1;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  font-size: 1rem;
-  font-family: inherit;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-input[type="text"]:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
 }
 
 button {
@@ -181,17 +188,6 @@ button.danger {
 }
 button.danger:hover {
   background-color: var(--danger-hover);
-}
-
-button.random-btn {
-    flex-shrink: 0;
-    padding: 0.75rem;
-    font-size: 1.25rem;
-    line-height: 1;
-    background-color: var(--secondary-color);
-}
-button.random-btn:hover {
-    background-color: var(--secondary-hover);
 }
 
 .loading-container, .error-container, .resume-prompt {
@@ -490,9 +486,6 @@ button.random-btn:hover {
   }
   .app-container {
     padding: 1.5rem 1rem;
-  }
-  .input-container {
-    flex-direction: row;
   }
   .options-grid {
     grid-template-columns: 1fr;

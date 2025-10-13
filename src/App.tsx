@@ -3,6 +3,10 @@ import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 import { QuizData, SavedState, Language, Difficulty } from './types';
 import { translations } from './translations';
 import { TOPICS } from './topics';
+import ReactMarkdown from 'react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+
 
 const AVAILABLE_MODELS = [
  'gemini-2.5-flash-lite',
@@ -247,7 +251,31 @@ const App = () => {
                     const isCorrect = userAnswer === q.correctAnswer;
                     return (
                         <div key={index} className={`review-card ${isCorrect ? 'correct-border' : 'incorrect-border'}`}>
-                            <h3>{t.question} {index + 1}: {q.question}</h3>
+                            <h3>{t.question} {index + 1}:</h3>
+                          <ReactMarkdown
+                      components={{
+                        code({ inline, className, children, ...props }) {
+                          const match = /language-(\w+)/.exec(className || '');
+                          return !inline && match ? (
+                            <SyntaxHighlighter
+                              style={oneDark}
+                              language={match[1]}
+                              PreTag="div"
+                              {...props}
+                            >
+                              {String(children).replace(/\n$/, '')}
+                            </SyntaxHighlighter>
+                          ) : (
+                            <code className={className} {...props}>
+                              {children}
+                            </code>
+                          );
+                        }
+                      }}
+                    >
+                      {q.question}
+                    </ReactMarkdown>
+
                             <ul className="review-options">
                                 {q.options.map((option, optionIndex) => {
                                     const isCorrectOption = option === q.correctAnswer;
@@ -305,7 +333,32 @@ const App = () => {
             </div>
             <button className="exit-btn" onClick={() => setShowExitConfirm(true)}>{t.exitButton}</button>
           </div>
-          <h2>{t.question} {currentQuestionIndex + 1}: {currentQuestion.question}</h2>
+          <h2>{t.question} {currentQuestionIndex + 1}:</h2>
+<ReactMarkdown
+  components={{
+    code({ inline, className, children, ...props }) {
+      const match = /language-(\w+)/.exec(className || '');
+      return !inline && match ? (
+        <SyntaxHighlighter
+          style={oneDark}
+          language={match[1]}
+          PreTag="div"
+          {...props}
+        >
+          {String(children).replace(/\n$/, '')}
+        </SyntaxHighlighter>
+      ) : (
+        <code className={className} {...props}>
+          {children}
+        </code>
+      );
+    }
+  }}
+>
+  {currentQuestion.question}
+</ReactMarkdown>
+
+
           <ul className="options-list">
             {currentQuestion.options.map((option, index) => {
               const isCorrectAnswer = option === currentQuestion.correctAnswer;
@@ -417,20 +470,23 @@ const App = () => {
                   </select>
                 </div>
               </div>
-              <div className="input-container">
-                  <input
-                    type="text"
-                    value={topic}
-                    onChange={(e) => setTopic(e.target.value)}
-                    placeholder={t.topicPlaceholder}
-                    onKeyDown={(e) => e.key === 'Enter' && !isLoading && handleGenerateQuiz()}
-                  />
-                  <button onClick={handleRandomTopic} className="random-btn" aria-label={t.randomTopicButton}>
-                    🎲
-                  </button>
-                  <button onClick={handleGenerateQuiz} disabled={isLoading || !topic.trim() || !numQuestions}>
-                    {t.generateButton}
-                  </button>
+              <div className="topic-input-container">
+                <label htmlFor="topic-input">{t.topicPlaceholder}</label>
+                <textarea
+                  id="topic-input"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  placeholder={t.topicPlaceholder}
+                  rows={6}
+                />
+              </div>
+              <div className="setup-actions">
+                <button onClick={handleRandomTopic} className="secondary">
+                  🎲 {t.randomTopicButton}
+                </button>
+                <button onClick={handleGenerateQuiz} disabled={isLoading || !topic.trim() || !numQuestions}>
+                  {t.generateButton}
+                </button>
               </div>
            </div>
         )}
