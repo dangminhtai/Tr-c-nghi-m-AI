@@ -17,6 +17,7 @@ export interface SavedState {
   score: number;
   topic: string;
   language: 'vi' | 'en';
+  generatedChallengeCode: string | null;
 }
 
 export type Language = 'vi' | 'en';
@@ -27,3 +28,15 @@ export type Difficulty =
   'hard' | 
   'very_hard' | 
   'extreme';
+  
+export interface QuizConfig {
+  v: number;
+  topic: string;
+  numQuestions: number;
+  difficulty: Difficulty;
+  language: Language;
+  model: string;
+  mode: 'topic' | 'file';
+  seed?: number;
+  fileContent?: { data: string; mimeType: string; } | null;
+}

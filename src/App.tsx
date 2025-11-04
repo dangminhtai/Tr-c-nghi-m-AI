@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
-import { QuizData, SavedState, Language, Difficulty } from './types';
+import { QuizData, SavedState, Language, Difficulty, QuizConfig } from './types';
 import { translations } from './translations';
 import { TOPICS } from './topics';
 import ReactMarkdown from 'react-markdown';
@@ -9,11 +9,39 @@ import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 
 const AVAILABLE_MODELS = [
+ 'gemini-2.5-flash',
+ 'gemini-2.5-pro',
  'gemini-2.5-flash-lite',
-  'gemini-2.5-flash',
-  'gemini-2.0-flash',
-  'gemini-2.5-pro'
+ 'gemini-2.0-flash',
 ];
+
+const ALLOWED_FILE_TYPES = [
+    'application/pdf',
+    'text/plain',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // docx
+    'image/png',
+    'image/jpeg',
+    'image/webp',
+    'image/heic',
+    'image/heif'
+];
+
+// Helper function to encode a UTF-8 string to Base64, correctly handling Unicode characters.
+// This is necessary because btoa() does not support multi-byte characters.
+function unicodeToBase64(str: string): string {
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
+        function toSolidBytes(_match, p1) {
+            return String.fromCharCode(parseInt(p1, 16));
+        }));
+}
+
+// Helper function to decode a Base64 string to UTF-8, correctly handling Unicode characters.
+function base64ToUnicode(str: string): string {
+    return decodeURIComponent(atob(str).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+}
+
 
 const App = () => {
   const [language, setLanguage] = useState<Language>('vi');
@@ -34,6 +62,20 @@ const App = () => {
   const [showResumePrompt, setShowResumePrompt] = useState<boolean>(false);
   const [showExitConfirm, setShowExitConfirm] = useState<boolean>(false);
 
+  // Feature states
+  const [inputMode, setInputMode] = useState<'topic' | 'file' | 'challenge'>('topic');
+  
+  // File upload states
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [fileContent, setFileContent] = useState<{data: string; mimeType: string} | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Challenge mode states
+  const [challengeCodeInput, setChallengeCodeInput] = useState<string>('');
+  const [generatedChallengeCode, setGeneratedChallengeCode] = useState<string | null>(null);
+  const [isCopied, setIsCopied] = useState<boolean>(false);
+
+
   const t = useMemo(() => translations[language], [language]);
 
   useEffect(() => {
@@ -42,13 +84,11 @@ const App = () => {
       if (savedStateJSON) {
         setShowResumePrompt(true);
       } else {
-        // Set initial random topic
         const randomTopicIndex = Math.floor(Math.random() * TOPICS[language].length);
         setTopic(TOPICS[language][randomTopicIndex]);
       }
     } catch (e) {
       console.error("Could not access localStorage:", e);
-       // Set initial random topic even if localStorage fails
       const randomTopicIndex = Math.floor(Math.random() * TOPICS['vi'].length);
       setTopic(TOPICS['vi'][randomTopicIndex]);
     }
@@ -58,7 +98,7 @@ const App = () => {
     try {
       if (quizData && !isQuizFinished) {
         const stateToSave: SavedState = {
-          quizData, currentQuestionIndex, userAnswers, score, topic, language
+          quizData, currentQuestionIndex, userAnswers, score, topic, language, generatedChallengeCode
         };
         localStorage.setItem('quizProgress', JSON.stringify(stateToSave));
       } else {
@@ -67,7 +107,7 @@ const App = () => {
     } catch (e) {
       console.error("Could not access localStorage:", e);
     }
-  }, [quizData, currentQuestionIndex, userAnswers, score, isQuizFinished, topic, language]);
+  }, [quizData, currentQuestionIndex, userAnswers, score, isQuizFinished, topic, language, generatedChallengeCode]);
 
   const handleResume = (resume: boolean) => {
     setShowResumePrompt(false);
@@ -82,6 +122,7 @@ const App = () => {
           setCurrentQuestionIndex(savedState.currentQuestionIndex);
           setUserAnswers(savedState.userAnswers);
           setScore(savedState.score);
+          setGeneratedChallengeCode(savedState.generatedChallengeCode);
         }
       } catch (e) {
          console.error("Failed to parse saved state:", e);
@@ -97,7 +138,6 @@ const App = () => {
   const handleRandomTopic = () => {
     const currentTopics = TOPICS[language];
     let newTopic = topic;
-    // Ensure we get a different topic if possible and the list has more than one item
     if (currentTopics.length > 1) {
       do {
         const randomIndex = Math.floor(Math.random() * currentTopics.length);
@@ -108,10 +148,27 @@ const App = () => {
     }
     setTopic(newTopic);
   };
+  
+  const handleFileChange = (file: File | null) => {
+    if (!file) return;
+
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+        setError(t.fileTypeError);
+        return;
+    }
+    
+    setError(null);
+    setUploadedFile(file);
+    
+    const reader = new FileReader();
+    reader.onloadend = () => {
+        const base64String = (reader.result as string).split(',')[1];
+        setFileContent({ data: base64String, mimeType: file.type });
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleGenerateQuiz = async () => {
-    if (!topic.trim() || !numQuestions) return;
-
     setIsLoading(true);
     setError(null);
     setQuizData(null);
@@ -120,6 +177,59 @@ const App = () => {
     setUserAnswers([]);
     setIsQuizFinished(false);
     setIsReviewing(false);
+    setGeneratedChallengeCode(null);
+
+    let quizConfig: QuizConfig | null = null;
+    
+    if (inputMode === 'challenge') {
+        try {
+            const decodedString = base64ToUnicode(challengeCodeInput.trim());
+            const decodedConfig = JSON.parse(decodedString);
+
+            if (decodedConfig.v !== 1 || !decodedConfig.topic || !decodedConfig.numQuestions || !decodedConfig.difficulty || typeof decodedConfig.seed === 'undefined') {
+                throw new Error("Invalid challenge code structure");
+            }
+            quizConfig = decodedConfig;
+            
+            // Sync app state with challenge code settings
+            setLanguage(quizConfig.language);
+            setTopic(quizConfig.topic);
+            setNumQuestions(quizConfig.numQuestions);
+            setDifficulty(quizConfig.difficulty);
+            setModel(quizConfig.model);
+            setGeneratedChallengeCode(challengeCodeInput.trim());
+
+        } catch (e) {
+            console.error(e);
+            setError(t.invalidChallengeCode);
+            setIsLoading(false);
+            return;
+        }
+    } else {
+        const isReady = (inputMode === 'topic' && topic.trim() && numQuestions) || (inputMode === 'file' && uploadedFile && numQuestions);
+        if (!isReady) {
+            setIsLoading(false);
+            return;
+        }
+        
+        let quizTopic = topic;
+        
+        if (inputMode === 'topic') {
+            const seed = Math.floor(Math.random() * 1000000);
+            quizConfig = { v: 1, topic, numQuestions: Number(numQuestions), difficulty, language, model, seed, mode: 'topic' };
+            setGeneratedChallengeCode(unicodeToBase64(JSON.stringify(quizConfig)));
+        } else { // File mode
+            quizTopic = uploadedFile?.name || t.uploadedFile;
+            quizConfig = { v: 1, topic: quizTopic, numQuestions: Number(numQuestions), difficulty, language, model, mode: 'file', fileContent };
+        }
+        setTopic(quizTopic);
+    }
+    
+    if (!quizConfig) {
+      setError(t.errorMessage);
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -138,15 +248,29 @@ const App = () => {
         },
       };
 
-      const prompt = t.promptTemplate(topic, Number(numQuestions), t.difficulties[difficulty]);
+      let contents;
+      
+      if (quizConfig.mode === 'file' && quizConfig.fileContent) {
+        const filePart = { inlineData: quizConfig.fileContent };
+        const textPart = { text: t.filePromptTemplate(quizConfig.numQuestions, t.difficulties[quizConfig.difficulty]) };
+        contents = { parts: [textPart, filePart] };
+      } else {
+        contents = t.promptTemplate(quizConfig.topic, quizConfig.numQuestions, t.difficulties[quizConfig.difficulty]);
+      }
+      
+      const apiConfig: { responseMimeType: string, responseSchema: object, seed?: number } = {
+        responseMimeType: 'application/json',
+        responseSchema,
+      };
+
+      if (typeof quizConfig.seed !== 'undefined') {
+        apiConfig.seed = quizConfig.seed;
+      }
 
       const response: GenerateContentResponse = await ai.models.generateContent({
-        model,
-        contents: prompt,
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema,
-        },
+        model: quizConfig.model,
+        contents,
+        config: apiConfig,
       });
       
       const parsedData: QuizData = JSON.parse(response.text);
@@ -188,6 +312,12 @@ const App = () => {
     setTopic(TOPICS[language][randomTopicIndex]);
     setIsQuizFinished(false);
     setIsReviewing(false);
+    setInputMode('topic');
+    setUploadedFile(null);
+    setFileContent(null);
+    setError(null);
+    setChallengeCodeInput('');
+    setGeneratedChallengeCode(null);
     localStorage.removeItem('quizProgress');
   };
 
@@ -198,6 +328,15 @@ const App = () => {
 
   const handlePrint = () => {
       window.print();
+  };
+
+  const handleCopyCode = () => {
+    if (generatedChallengeCode) {
+        navigator.clipboard.writeText(generatedChallengeCode).then(() => {
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2000);
+        });
+    }
   };
   
   const renderLanguageSwitcher = () => (
@@ -227,7 +366,7 @@ const App = () => {
       );
     }
     
-    if (error) {
+    if (error && !quizData) {
       return (
         <div className="error-container">
           <p className="error-message">{error}</p>
@@ -254,14 +393,18 @@ const App = () => {
                             <h3>{t.question} {index + 1}:</h3>
                           <ReactMarkdown
                       components={{
-                        code({ inline, className, children, ...props }) {
+                        // FIX: Destructure `node` prop to help TypeScript correctly infer types for `react-markdown` custom components.
+                        // This resolves the error on the `inline` property.
+                        code({ node, inline, className, children, ...props }) {
                           const match = /language-(\w+)/.exec(className || '');
                           return !inline && match ? (
                             <SyntaxHighlighter
-                              style={oneDark}
+                              // FIX: Cast `oneDark` style to `any` to work around a type incompatibility issue
+                              // in `@types/react-syntax-highlighter`. Also, removed `{...props}` which are not
+                              // valid for this component and could pass invalid attributes like `inline`.
+                              style={oneDark as any}
                               language={match[1]}
                               PreTag="div"
-                              {...props}
                             >
                               {String(children).replace(/\n$/, '')}
                             </SyntaxHighlighter>
@@ -316,6 +459,17 @@ const App = () => {
             <button onClick={handleReset}>{t.tryAgainButton}</button>
             <button onClick={() => setIsReviewing(true)}>{t.reviewButton}</button>
           </div>
+          {generatedChallengeCode && (
+             <div className="challenge-code-container">
+                <h3>{t.challengeCodeTitle}</h3>
+                <div className="challenge-code-box">
+                    <input type="text" readOnly value={generatedChallengeCode} />
+                    <button className="copy-btn" onClick={handleCopyCode}>
+                        {isCopied ? t.copied : t.copy}
+                    </button>
+                </div>
+             </div>
+          )}
         </div>
       );
     }
@@ -336,14 +490,18 @@ const App = () => {
           <h2>{t.question} {currentQuestionIndex + 1}:</h2>
 <ReactMarkdown
   components={{
-    code({ inline, className, children, ...props }) {
+    // FIX: Destructure `node` prop to help TypeScript correctly infer types for `react-markdown` custom components.
+    // This resolves the error on the `inline` property.
+    code({ node, inline, className, children, ...props }) {
       const match = /language-(\w+)/.exec(className || '');
       return !inline && match ? (
         <SyntaxHighlighter
-          style={oneDark}
+          // FIX: Cast `oneDark` style to `any` to work around a type incompatibility issue
+          // in `@types/react-syntax-highlighter`. Also, removed `{...props}` which are not
+          // valid for this component and could pass invalid attributes like `inline`.
+          style={oneDark as any}
           language={match[1]}
           PreTag="div"
-          {...props}
         >
           {String(children).replace(/\n$/, '')}
         </SyntaxHighlighter>
@@ -420,6 +578,10 @@ const App = () => {
         </div>
     )
   }
+  
+  const isGenerateDisabled = isLoading || (inputMode === 'topic' && (!topic.trim() || !numQuestions)) || 
+    (inputMode === 'file' && (!uploadedFile || !numQuestions)) ||
+    (inputMode === 'challenge' && !challengeCodeInput.trim());
 
   return (
     <>
@@ -429,6 +591,13 @@ const App = () => {
         <h1 className="no-print">{t.title}</h1>
         {!quizData && !isLoading && !isQuizFinished && !showResumePrompt && (
            <div className="setup-container">
+            <div className="input-mode-switcher">
+                <button className={inputMode === 'topic' ? 'active' : ''} onClick={() => setInputMode('topic')}>{t.enterTopic}</button>
+                <button className={inputMode === 'file' ? 'active' : ''} onClick={() => setInputMode('file')}>{t.uploadDocument}</button>
+                <button className={inputMode === 'challenge' ? 'active' : ''} onClick={() => setInputMode('challenge')}>{t.challenge}</button>
+            </div>
+
+            {inputMode !== 'challenge' && (
               <div className="options-grid">
                 <div>
                   <label htmlFor="numQuestions">{t.numQuestionsLabel}</label>
@@ -454,13 +623,12 @@ const App = () => {
                 <div>
                   <label htmlFor="difficulty">{t.difficultyLabel}</label>
                   <select id="difficulty" value={difficulty} onChange={(e) => setDifficulty(e.target.value as any)}>
-                <option value="very_easy">{t.difficulties.very_easy}</option>
-                <option value="easy">{t.difficulties.easy}</option>
-                <option value="medium">{t.difficulties.medium}</option>
-                <option value="hard">{t.difficulties.hard}</option>
-                <option value="very_hard">{t.difficulties.very_hard}</option>
-                <option value="extreme">{t.difficulties.extreme}</option>
-
+                    <option value="very_easy">{t.difficulties.very_easy}</option>
+                    <option value="easy">{t.difficulties.easy}</option>
+                    <option value="medium">{t.difficulties.medium}</option>
+                    <option value="hard">{t.difficulties.hard}</option>
+                    <option value="very_hard">{t.difficulties.very_hard}</option>
+                    <option value="extreme">{t.difficulties.extreme}</option>
                   </select>
                 </div>
                  <div>
@@ -470,22 +638,75 @@ const App = () => {
                   </select>
                 </div>
               </div>
-              <div className="topic-input-container">
-                <label htmlFor="topic-input">{t.topicPlaceholder}</label>
-                <textarea
-                  id="topic-input"
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                  placeholder={t.topicPlaceholder}
-                  rows={6}
-                />
-              </div>
+            )}
+              
+              {inputMode === 'topic' && (
+                <div className="topic-input-container">
+                  <label htmlFor="topic-input">{t.topicPlaceholder}</label>
+                  <textarea
+                    id="topic-input"
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                    placeholder={t.topicPlaceholder}
+                    rows={6}
+                  />
+                </div>
+              )}
+
+              {inputMode === 'file' && (
+                <div>
+                    <input 
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={(e) => handleFileChange(e.target.files ? e.target.files[0] : null)}
+                        style={{ display: 'none' }}
+                        accept={ALLOWED_FILE_TYPES.join(',')}
+                    />
+                    <div 
+                        className="file-upload-area"
+                        onClick={() => fileInputRef.current?.click()}
+                        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }}
+                        onDragLeave={(e) => e.currentTarget.classList.remove('drag-over')}
+                        onDrop={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.classList.remove('drag-over');
+                            handleFileChange(e.dataTransfer.files ? e.dataTransfer.files[0] : null);
+                        }}
+                    >
+                        <p>{t.dragDrop} <span>{t.browse}</span></p>
+                        <p style={{fontSize: '0.75rem'}}>({t.supportedFiles})</p>
+                    </div>
+                    {uploadedFile && (
+                        <div className="file-info">
+                            <span>{uploadedFile.name}</span>
+                            <button className="remove-file-btn" onClick={() => { setUploadedFile(null); setFileContent(null); }}>&times;</button>
+                        </div>
+                    )}
+                </div>
+              )}
+
+              {inputMode === 'challenge' && (
+                 <div className="challenge-input-container">
+                    <label htmlFor="challenge-code-input">{t.challengeCodeInputLabel}</label>
+                    <input 
+                        type="text"
+                        id="challenge-code-input"
+                        value={challengeCodeInput}
+                        onChange={(e) => setChallengeCodeInput(e.target.value)}
+                        placeholder={t.challengeCodePlaceholder}
+                    />
+                 </div>
+              )}
+
+               {error && <p className="error-message" style={{textAlign: 'center'}}>{error}</p>}
               <div className="setup-actions">
-                <button onClick={handleRandomTopic} className="secondary">
-                  🎲 {t.randomTopicButton}
-                </button>
-                <button onClick={handleGenerateQuiz} disabled={isLoading || !topic.trim() || !numQuestions}>
-                  {t.generateButton}
+                {inputMode === 'topic' && (
+                  <button onClick={handleRandomTopic} className="secondary">
+                    🎲 {t.randomTopicButton}
+                  </button>
+                )}
+                <button onClick={handleGenerateQuiz} disabled={isGenerateDisabled}>
+                  {inputMode === 'challenge' ? t.startChallengeButton : t.generateButton}
                 </button>
               </div>
            </div>

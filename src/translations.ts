@@ -39,7 +39,26 @@ export const translations = {
     exitConfirmMessage: "Bạn có chắc muốn thoát không? Toàn bộ tiến trình sẽ bị mất.",
     confirmExit: "Đồng ý",
     cancelExit: "Hủy",
+    // File upload
+    enterTopic: "Nhập Chủ đề",
+    uploadDocument: "Tải lên Tài liệu",
+    dragDrop: "Kéo và thả tệp vào đây, hoặc",
+    browse: "chọn tệp",
+    supportedFiles: "Hỗ trợ: PDF, TXT, DOCX, PNG, JPG",
+    fileTypeError: "Định dạng tệp không được hỗ trợ.",
+    uploadedFile: "Tài liệu đã tải lên",
+    // Challenge mode
+    challenge: "Thử thách",
+    challengeCodeInputLabel: "Mã Thử thách",
+    challengeCodePlaceholder: "Dán mã thử thách vào đây...",
+    startChallengeButton: "Bắt đầu Thử thách",
+    invalidChallengeCode: "Mã thử thách không hợp lệ. Vui lòng kiểm tra lại.",
+    challengeCodeTitle: "Chia sẻ thử thách này!",
+    copy: "Sao chép",
+    copied: "Đã sao chép!",
+    // Prompts
     promptTemplate: (topic: string, numQuestions: number, difficulty: string) => `Tạo một bài kiểm tra trắc nghiệm gồm ${numQuestions} câu về chủ đề sau: "${topic}" với độ khó là ${difficulty}. Mỗi câu hỏi phải có 4 lựa chọn. Đảm bảo rằng 'correctAnswer' phải là một trong các giá trị trong mảng 'options'.`,
+    filePromptTemplate: (numQuestions: number, difficulty: string) => `Dựa trên tài liệu được cung cấp, hãy tạo một bài kiểm tra trắc nghiệm gồm ${numQuestions} câu với độ khó là ${difficulty}. Mỗi câu hỏi phải có 4 lựa chọn. Đảm bảo rằng 'correctAnswer' phải là một trong các giá trị trong mảng 'options'.`,
   },
   en: {
     title: "AI Quiz Generator",
@@ -81,6 +100,25 @@ export const translations = {
     exitConfirmMessage: "Are you sure you want to exit? All progress will be lost.",
     confirmExit: "Yes, Exit",
     cancelExit: "Cancel",
+    // File upload
+    enterTopic: "Enter Topic",
+    uploadDocument: "Upload Document",
+    dragDrop: "Drag and drop a file here, or",
+    browse: "browse",
+    supportedFiles: "Supports: PDF, TXT, DOCX, PNG, JPG",
+    fileTypeError: "Unsupported file type.",
+    uploadedFile: "Uploaded Document",
+    // Challenge mode
+    challenge: "Challenge",
+    challengeCodeInputLabel: "Challenge Code",
+    challengeCodePlaceholder: "Paste the challenge code here...",
+    startChallengeButton: "Start Challenge",
+    invalidChallengeCode: "Invalid challenge code. Please check and try again.",
+    challengeCodeTitle: "Share this challenge!",
+    copy: "Copy",
+    copied: "Copied!",
+    // Prompts
     promptTemplate: (topic: string, numQuestions: number, difficulty: string) => `Generate a multiple-choice quiz with ${numQuestions} questions on the following topic: "${topic}" with a difficulty of ${difficulty}. Each question must have 4 options. Ensure that 'correctAnswer' is one of the values in the 'options' array.`,
+    filePromptTemplate: (numQuestions: number, difficulty: string) => `Based on the provided document, generate a multiple-choice quiz with ${numQuestions} questions with a difficulty of ${difficulty}. Each question must have 4 options. Ensure that 'correctAnswer' is one of the values in the 'options' array.`,
   }
 };
