@@ -39,6 +39,10 @@ export const translations = {
     exitConfirmMessage: "Bạn có chắc muốn thoát không? Toàn bộ tiến trình sẽ bị mất.",
     confirmExit: "Đồng ý",
     cancelExit: "Hủy",
+    shareButton: "Chia sẻ",
+    shareModalTitle: "Chia sẻ Thử thách",
+    shareModalInstruction: "Gửi mã này cho bạn bè để họ cùng làm bài trắc nghiệm này!",
+    closeButton: "Đóng",
     // File upload
     enterTopic: "Nhập Chủ đề",
     uploadDocument: "Tải lên Tài liệu",
@@ -100,6 +104,10 @@ export const translations = {
     exitConfirmMessage: "Are you sure you want to exit? All progress will be lost.",
     confirmExit: "Yes, Exit",
     cancelExit: "Cancel",
+    shareButton: "Share",
+    shareModalTitle: "Share Challenge",
+    shareModalInstruction: "Send this code to your friends so they can take the same quiz!",
+    closeButton: "Close",
     // File upload
     enterTopic: "Enter Topic",
     uploadDocument: "Upload Document",

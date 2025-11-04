@@ -317,14 +317,28 @@ button.danger:hover {
   margin-bottom: 1.5rem;
 }
 
-.exit-btn {
+.header-buttons {
+    display: flex;
+    gap: 0.5rem;
+    margin-left: auto;
+}
+.share-btn, .exit-btn {
   padding: 0.5rem 1rem;
-  background-color: #e63946; /* đỏ tươi */
-  color: #fff;
   font-size: 0.875rem;
   border: none;
   border-radius: 6px;
   cursor: pointer;
+}
+.share-btn {
+    background-color: var(--secondary-color);
+    color: #fff;
+}
+.share-btn:hover {
+    background-color: var(--secondary-hover);
+}
+.exit-btn {
+  background-color: #e63946; /* đỏ tươi */
+  color: #fff;
 }
 .exit-btn:hover {
   background-color: #c92a2a; /* đỏ đậm khi hover */
@@ -598,6 +612,14 @@ button.danger:hover {
   display: flex;
   justify-content: center;
   gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.share-modal-content .challenge-code-box {
+    margin-top: 1.5rem;
+}
+.share-modal-content .challenge-code-box input {
+    text-align: center;
 }
 
 

@@ -61,6 +61,7 @@ const App = () => {
   const [error, setError] = useState<string | null>(null);
   const [showResumePrompt, setShowResumePrompt] = useState<boolean>(false);
   const [showExitConfirm, setShowExitConfirm] = useState<boolean>(false);
+  const [showShareModal, setShowShareModal] = useState<boolean>(false);
 
   // Feature states
   const [inputMode, setInputMode] = useState<'topic' | 'file' | 'challenge'>('topic');
@@ -393,15 +394,15 @@ const App = () => {
                             <h3>{t.question} {index + 1}:</h3>
                           <ReactMarkdown
                       components={{
-                        // FIX: Destructure `node` prop to help TypeScript correctly infer types for `react-markdown` custom components.
-                        // This resolves the error on the `inline` property.
-                        code({ node, inline, className, children, ...props }) {
+                        // FIX: Fix TypeScript error by adjusting props destructuring.
+                        // Removing the unused `node` prop helps TypeScript correctly infer the component's props,
+                        // making the `inline` property available and resolving the type error.
+                        code({ inline, className, children, ...props }) {
                           const match = /language-(\w+)/.exec(className || '');
                           return !inline && match ? (
                             <SyntaxHighlighter
                               // FIX: Cast `oneDark` style to `any` to work around a type incompatibility issue
-                              // in `@types/react-syntax-highlighter`. Also, removed `{...props}` which are not
-                              // valid for this component and could pass invalid attributes like `inline`.
+                              // in `@types/react-syntax-highlighter`.
                               style={oneDark as any}
                               language={match[1]}
                               PreTag="div"
@@ -485,20 +486,25 @@ const App = () => {
             <div className="progress-bar">
                 <div className="progress" style={{ width: `${progress}%` }}></div>
             </div>
-            <button className="exit-btn" onClick={() => setShowExitConfirm(true)}>{t.exitButton}</button>
+            <div className="header-buttons">
+              {generatedChallengeCode && quizData.length > 0 && inputMode !== 'challenge' && (
+                <button className="share-btn" onClick={() => setShowShareModal(true)}>{t.shareButton}</button>
+              )}
+              <button className="exit-btn" onClick={() => setShowExitConfirm(true)}>{t.exitButton}</button>
+            </div>
           </div>
           <h2>{t.question} {currentQuestionIndex + 1}:</h2>
 <ReactMarkdown
   components={{
-    // FIX: Destructure `node` prop to help TypeScript correctly infer types for `react-markdown` custom components.
-    // This resolves the error on the `inline` property.
-    code({ node, inline, className, children, ...props }) {
+    // FIX: Fix TypeScript error by adjusting props destructuring.
+    // Removing the unused `node` prop helps TypeScript correctly infer the component's props,
+    // making the `inline` property available and resolving the type error.
+    code({ inline, className, children, ...props }) {
       const match = /language-(\w+)/.exec(className || '');
       return !inline && match ? (
         <SyntaxHighlighter
           // FIX: Cast `oneDark` style to `any` to work around a type incompatibility issue
-          // in `@types/react-syntax-highlighter`. Also, removed `{...props}` which are not
-          // valid for this component and could pass invalid attributes like `inline`.
+          // in `@types/react-syntax-highlighter`.
           style={oneDark as any}
           language={match[1]}
           PreTag="div"
@@ -573,6 +579,28 @@ const App = () => {
                 <div className="modal-actions">
                     <button onClick={() => setShowExitConfirm(false)} className="secondary">{t.cancelExit}</button>
                     <button onClick={handleConfirmExit} className="danger">{t.confirmExit}</button>
+                </div>
+            </div>
+        </div>
+    )
+  }
+
+  const renderShareModal = () => {
+    if (!showShareModal) return null;
+    
+    return (
+        <div className="modal-overlay">
+            <div className="modal-content share-modal-content">
+                <h2>{t.shareModalTitle}</h2>
+                <p>{t.shareModalInstruction}</p>
+                 <div className="challenge-code-box">
+                    <input type="text" readOnly value={generatedChallengeCode || ''} />
+                    <button className="copy-btn" onClick={handleCopyCode}>
+                        {isCopied ? t.copied : t.copy}
+                    </button>
+                </div>
+                <div className="modal-actions">
+                    <button onClick={() => setShowShareModal(false)}>{t.closeButton}</button>
                 </div>
             </div>
         </div>
@@ -714,6 +742,7 @@ const App = () => {
         {renderContent()}
       </div>
       {renderExitConfirmation()}
+      {renderShareModal()}
     </>
   );
 };
