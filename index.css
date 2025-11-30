@@ -753,3 +753,31 @@ button.danger:hover {
 .print-only {
   display: none;
 }
+
+/* Code block styles */
+.code-block-wrapper {
+  margin: 1rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #1e1e1e; /* Dark background */
+  border: 1px solid #333;
+}
+
+pre {
+  margin: 0;
+  padding: 1rem;
+  overflow-x: auto;
+  font-family: 'Consolas', 'Monaco', 'Andale Mono', 'Ubuntu Mono', monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #d4d4d4; /* Light text */
+}
+
+.inline-code {
+  background-color: #f3f4f6;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.9em;
+  color: #ef4444;
+}

@@ -62,9 +62,9 @@ export const translations = {
     challengeCodeTitle: "Chia sẻ thử thách này!",
     copy: "Sao chép",
     copied: "Đã sao chép!",
-    // Prompts
-    promptTemplate: (topic: string, numQuestions: number, difficulty: string) => `Tạo một bài kiểm tra trắc nghiệm gồm ${numQuestions} câu về chủ đề sau: "${topic}" với độ khó là ${difficulty}. Mỗi câu hỏi phải có 4 lựa chọn. Đảm bảo rằng 'correctAnswer' phải là một trong các giá trị trong mảng 'options'.`,
-    filePromptTemplate: (numQuestions: number, difficulty: string) => `Dựa trên (các) tài liệu/hình ảnh được cung cấp, hãy tạo một bài kiểm tra trắc nghiệm gồm ${numQuestions} câu với độ khó là ${difficulty}. Mỗi câu hỏi phải có 4 lựa chọn. Đảm bảo rằng 'correctAnswer' phải là một trong các giá trị trong mảng 'options'.`,
+    // Prompts - Updated with strict language enforcement
+    promptTemplate: (topic: string, numQuestions: number, difficulty: string) => `Tạo một bài kiểm tra trắc nghiệm gồm ${numQuestions} câu về chủ đề sau: "${topic}" với độ khó là ${difficulty}. Mỗi câu hỏi phải có 4 lựa chọn. Đảm bảo rằng 'correctAnswer' phải là một trong các giá trị trong mảng 'options'. QUAN TRỌNG: Toàn bộ nội dung câu hỏi, đáp án và giải thích PHẢI ĐƯỢC VIẾT BẰNG TIẾNG VIỆT, bất kể chủ đề là gì.`,
+    filePromptTemplate: (numQuestions: number, difficulty: string) => `Dựa trên (các) tài liệu/hình ảnh được cung cấp, hãy tạo một bài kiểm tra trắc nghiệm gồm ${numQuestions} câu với độ khó là ${difficulty}. Mỗi câu hỏi phải có 4 lựa chọn. Đảm bảo rằng 'correctAnswer' phải là một trong các giá trị trong mảng 'options'. QUAN TRỌNG: Toàn bộ nội dung câu hỏi, đáp án và giải thích PHẢI ĐƯỢC VIẾT BẰNG TIẾNG VIỆT.`,
   },
   en: {
     title: "AI Quiz Generator",
@@ -128,8 +128,8 @@ export const translations = {
     challengeCodeTitle: "Share this challenge!",
     copy: "Copy",
     copied: "Copied!",
-    // Prompts
-    promptTemplate: (topic: string, numQuestions: number, difficulty: string) => `Generate a multiple-choice quiz with ${numQuestions} questions on the following topic: "${topic}" with a difficulty of ${difficulty}. Each question must have 4 options. Ensure that 'correctAnswer' is one of the values in the 'options' array.`,
-    filePromptTemplate: (numQuestions: number, difficulty: string) => `Based on the provided document(s)/image(s), generate a multiple-choice quiz with ${numQuestions} questions with a difficulty of ${difficulty}. Each question must have 4 options. Ensure that 'correctAnswer' is one of the values in the 'options' array.`,
+    // Prompts - Updated with strict language enforcement
+    promptTemplate: (topic: string, numQuestions: number, difficulty: string) => `Generate a multiple-choice quiz with ${numQuestions} questions on the following topic: "${topic}" with a difficulty of ${difficulty}. Each question must have 4 options. Ensure that 'correctAnswer' is one of the values in the 'options' array. IMPORTANT: All questions, options, and explanations MUST BE IN ENGLISH, regardless of the topic language.`,
+    filePromptTemplate: (numQuestions: number, difficulty: string) => `Based on the provided document(s)/image(s), generate a multiple-choice quiz with ${numQuestions} questions with a difficulty of ${difficulty}. Each question must have 4 options. Ensure that 'correctAnswer' is one of the values in the 'options' array. IMPORTANT: All questions, options, and explanations MUST BE IN ENGLISH.`,
   }
 };

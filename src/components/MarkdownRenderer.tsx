@@ -1,8 +1,6 @@
 
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 interface MarkdownRendererProps {
   children: string;
@@ -12,21 +10,23 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ children }) => {
   return (
     <ReactMarkdown
       components={{
-        // Using 'any' for props to avoid TypeScript errors with 'inline' property
-        // which might not be present in strict types of newer react-markdown versions
-        code(props: any) {
-          const { inline, className, children, ...rest } = props;
+        code(props) {
+          const { children, className, node, ...rest } = props;
+          // Check if it's an inline code block or a block of code
+          // Note: react-markdown types might vary, checking className for language is a common heuristic
           const match = /language-(\w+)/.exec(className || '');
-          return !inline && match ? (
-            <SyntaxHighlighter
-              style={oneDark as any}
-              language={match[1]}
-              PreTag="div"
-            >
-              {String(children).replace(/\n$/, '')}
-            </SyntaxHighlighter>
+          const isInline = !match && !String(children).includes('\n');
+          
+          return !isInline ? (
+            <div className="code-block-wrapper">
+                <pre className={className}>
+                    <code {...rest} className={className}>
+                        {children}
+                    </code>
+                </pre>
+            </div>
           ) : (
-            <code className={className} {...rest}>
+            <code className="inline-code" {...rest}>
               {children}
             </code>
           );
