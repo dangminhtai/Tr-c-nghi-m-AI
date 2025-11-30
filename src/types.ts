@@ -1,3 +1,4 @@
+
 // Định nghĩa kiểu dữ liệu cho một câu hỏi
 export interface Question {
   question: string;
@@ -28,6 +29,12 @@ export type Difficulty =
   'hard' | 
   'very_hard' | 
   'extreme';
+
+export interface FileContent {
+  data: string;
+  mimeType: string;
+  name?: string; // Optional name for display
+}
   
 export interface QuizConfig {
   v: number;
@@ -38,5 +45,5 @@ export interface QuizConfig {
   model: string;
   mode: 'topic' | 'file';
   seed?: number;
-  fileContent?: { data: string; mimeType: string; } | null;
+  fileContents?: FileContent[]; // Changed to array support
 }
