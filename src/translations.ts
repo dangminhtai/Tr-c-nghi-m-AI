@@ -1,3 +1,4 @@
+
 export const translations = {
   vi: {
     title: "Trắc Nghiệm AI",
@@ -46,10 +47,11 @@ export const translations = {
     // File upload
     enterTopic: "Nhập Chủ đề",
     uploadDocument: "Tải lên Tài liệu",
-    dragDrop: "Kéo và thả tệp vào đây, hoặc",
+    dragDrop: "Kéo thả, chọn file hoặc dán (Ctrl+V) ảnh",
     browse: "chọn tệp",
-    supportedFiles: "Hỗ trợ: PDF, TXT, DOCX, PNG, JPG",
-    fileTypeError: "Định dạng tệp không được hỗ trợ.",
+    supportedFiles: "Hỗ trợ: PDF, TXT, DOCX, PNG, JPG (Tối đa 15MB)",
+    fileTypeError: "Một số tệp không đúng định dạng hỗ trợ.",
+    fileSizeError: "Tổng dung lượng tệp vượt quá 15MB.",
     uploadedFile: "Tài liệu đã tải lên",
     // Challenge mode
     challenge: "Thử thách",
@@ -62,7 +64,7 @@ export const translations = {
     copied: "Đã sao chép!",
     // Prompts
     promptTemplate: (topic: string, numQuestions: number, difficulty: string) => `Tạo một bài kiểm tra trắc nghiệm gồm ${numQuestions} câu về chủ đề sau: "${topic}" với độ khó là ${difficulty}. Mỗi câu hỏi phải có 4 lựa chọn. Đảm bảo rằng 'correctAnswer' phải là một trong các giá trị trong mảng 'options'.`,
-    filePromptTemplate: (numQuestions: number, difficulty: string) => `Dựa trên tài liệu được cung cấp, hãy tạo một bài kiểm tra trắc nghiệm gồm ${numQuestions} câu với độ khó là ${difficulty}. Mỗi câu hỏi phải có 4 lựa chọn. Đảm bảo rằng 'correctAnswer' phải là một trong các giá trị trong mảng 'options'.`,
+    filePromptTemplate: (numQuestions: number, difficulty: string) => `Dựa trên (các) tài liệu/hình ảnh được cung cấp, hãy tạo một bài kiểm tra trắc nghiệm gồm ${numQuestions} câu với độ khó là ${difficulty}. Mỗi câu hỏi phải có 4 lựa chọn. Đảm bảo rằng 'correctAnswer' phải là một trong các giá trị trong mảng 'options'.`,
   },
   en: {
     title: "AI Quiz Generator",
@@ -111,10 +113,11 @@ export const translations = {
     // File upload
     enterTopic: "Enter Topic",
     uploadDocument: "Upload Document",
-    dragDrop: "Drag and drop a file here, or",
+    dragDrop: "Drag & drop, select files, or paste (Ctrl+V) images",
     browse: "browse",
-    supportedFiles: "Supports: PDF, TXT, DOCX, PNG, JPG",
-    fileTypeError: "Unsupported file type.",
+    supportedFiles: "Supports: PDF, TXT, DOCX, PNG, JPG (Max 15MB)",
+    fileTypeError: "Some files are not supported.",
+    fileSizeError: "Total file size exceeds 15MB.",
     uploadedFile: "Uploaded Document",
     // Challenge mode
     challenge: "Challenge",
@@ -127,6 +130,6 @@ export const translations = {
     copied: "Copied!",
     // Prompts
     promptTemplate: (topic: string, numQuestions: number, difficulty: string) => `Generate a multiple-choice quiz with ${numQuestions} questions on the following topic: "${topic}" with a difficulty of ${difficulty}. Each question must have 4 options. Ensure that 'correctAnswer' is one of the values in the 'options' array.`,
-    filePromptTemplate: (numQuestions: number, difficulty: string) => `Based on the provided document, generate a multiple-choice quiz with ${numQuestions} questions with a difficulty of ${difficulty}. Each question must have 4 options. Ensure that 'correctAnswer' is one of the values in the 'options' array.`,
+    filePromptTemplate: (numQuestions: number, difficulty: string) => `Based on the provided document(s)/image(s), generate a multiple-choice quiz with ${numQuestions} questions with a difficulty of ${difficulty}. Each question must have 4 options. Ensure that 'correctAnswer' is one of the values in the 'options' array.`,
   }
 };
